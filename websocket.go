@@ -1,11 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gorilla/websocket"
 )
 
@@ -34,26 +32,58 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
+	defer log.Println("Finish handler")
 	defer conn.Close()
+
+	clientCloseCh := make(chan struct{})
+	conn.SetCloseHandler(func(code int, text string) error {
+		log.Println("Client closed connection")
+		close(clientCloseCh)
+		return nil
+	})
 
 	go readLoop(conn)
 
-	kafkaConsumer := getKafkaConsumer()
-	defer closeKafkaConsumer(kafkaConsumer)
+	ch := subscribe()
+	defer unsubscribe(ch)
+
+	startKafkaConsumer()
+	defer stopKafkaConsumer()
 
 	for {
-		msg, err := kafkaConsumer.ReadMessage(timeout)
-		if err == nil {
-			if err := conn.WriteMessage(websocket.TextMessage, msg.Value); err != nil {
+		select {
+		case msg, more := <-ch:
+			if !more {
+				return
+			}
+
+			value := msg.([]byte)
+			if err := conn.WriteMessage(websocket.TextMessage, value); err != nil {
 				log.Println(err)
 				return
 			}
-			fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
-		} else {
-			if err.(kafka.Error).Code() != kafka.ErrTimedOut {
-				// The client will automatically try to recover from all errors.
-				log.Printf("Consumer error: %v (%v)\n", err, msg)
-			}
+		case <-shutdownCh:
+			return
+		case <-clientCloseCh:
+			return
 		}
 	}
+}
+
+// Server is websocket server
+type Server struct {
+	mux *http.ServeMux
+}
+
+func newServer() *Server {
+	s := &Server{
+		mux: http.NewServeMux(),
+	}
+
+	s.mux.HandleFunc("/topic", handler)
+	return s
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.mux.ServeHTTP(w, r)
 }

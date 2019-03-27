@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -74,7 +75,7 @@ func main() {
 		var sigchan = make(chan os.Signal, 1)
 		signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigchan
-		log.Println("\nShutting down the server...")
+		fmt.Println("\nShutting down the server...")
 		close(shutdownCh)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -82,6 +83,6 @@ func main() {
 		cancel()
 	}()
 
-	log.Printf("Listening on %s", args.Listen)
+	fmt.Printf("Listening on %s", args.Listen)
 	s.ListenAndServe()
 }

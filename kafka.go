@@ -1,8 +1,10 @@
 package main
 
 import (
-	"log"
 	"sync"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
@@ -40,14 +42,16 @@ var consumers = 0
 
 func startKafkaConsumer() {
 	startKafkaConsumerLock.Lock()
-	defer startKafkaConsumerLock.Unlock()
+	currentConsumers := consumers
+	consumers++
+	startKafkaConsumerLock.Unlock()
 
-	if consumers == 0 {
+	if currentConsumers == 0 {
 		go func() {
-			log.Println("Start background kafka consumer")
+			log.Debugf("Start background kafka consumer\n")
 			defer func() {
 				stopKafkaConsumer()
-				log.Println("Finish background kafka consumer")
+				log.Debugf("Finish background kafka consumer\n")
 			}()
 
 			kafkaConsumer := createKafkaConsumer()
@@ -55,18 +59,18 @@ func startKafkaConsumer() {
 
 			running := true
 			for running {
-				msg, err := kafkaConsumer.ReadMessage(timeout)
+				log.Debug("Read message")
+				msg, err := kafkaConsumer.ReadMessage(timeout * time.Second)
 				if err == nil {
-					log.Printf("Publish Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
-					if !publish(msg.Value) {
-						log.Printf("No subscribers now\n")
-						return
-					}
-					log.Printf("Finish Publish\n")
+					log.Debugf("Publish Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
+					publish(msg.Value)
+					log.Debugf("Finish Publish\n")
 				} else {
 					if err.(kafka.Error).Code() != kafka.ErrTimedOut {
 						// The client will automatically try to recover from all errors.
-						log.Printf("Consumer error: %v (%v)\n", err, msg)
+						log.Errorf("Consumer error: %v (%v)\n", err, msg)
+					} else {
+						log.Debugf("Read message timeout")
 					}
 				}
 
@@ -76,14 +80,12 @@ func startKafkaConsumer() {
 			}
 		}()
 	} else {
-		log.Printf("Background kafka consumer is running, skip starting\n")
+		log.Debugf("Background kafka consumer is running, skip starting\n")
 	}
-
-	consumers++
 }
 
 func stopKafkaConsumer() {
-	log.Printf("Stop background kafka consumer.")
+	log.Debugf("Stop background kafka consumer.")
 	startKafkaConsumerLock.Lock()
 	defer startKafkaConsumerLock.Unlock()
 	if consumers > 0 {

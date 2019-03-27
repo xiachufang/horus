@@ -795,6 +795,7 @@ var List =
           self.items.push(item);
           added.push(item);
         }
+        self.items = self.items.slice(-500);
         self.update();
         return added;
       };
@@ -818,6 +819,7 @@ var List =
           self.items.splice(0, 0, item);
           prepended.push(item);
         }
+        self.items = self.items.slice(0, 500);
         self.update();
         return prepended;
       };

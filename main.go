@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -33,24 +34,25 @@ func main() {
 	arg.MustParse(&args)
 
 	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp: true,
+		FullTimestamp:          true,
+		DisableLevelTruncation: true,
 	})
 	log.SetReportCaller(true)
 	var level log.Level
-	switch args.LogLevel {
-	case "Panic":
+	switch strings.ToLower(args.LogLevel) {
+	case "panic":
 		level = log.PanicLevel
-	case "Fatal":
+	case "fatal":
 		level = log.FatalLevel
-	case "Error":
+	case "error":
 		level = log.ErrorLevel
-	case "Warn":
+	case "warn":
 		level = log.WarnLevel
-	case "Info":
+	case "info":
 		level = log.InfoLevel
-	case "Debug":
+	case "debug":
 		level = log.DebugLevel
-	case "Trace":
+	case "trace":
 		level = log.TraceLevel
 	default:
 		level = log.WarnLevel

@@ -20,13 +20,19 @@ func main() {
 		Listen       string
 		KafkaBroker  string
 		KafkaGroupID string
+		KafkaTopic   string
 	}
 
 	args.Listen = "0.0.0.0:8888"
 	args.KafkaBroker = "kafka-01:9092,kafka-02:9092,kafka-03:9092"
 	args.KafkaGroupID = "horus"
+	args.KafkaTopic = "trackbeat-debug"
 
 	arg.MustParse(&args)
+
+	kafkaConfig.SetKey("bootstrap.servers", args.KafkaBroker)
+	kafkaConfig.SetKey("group.id", args.KafkaGroupID)
+	kafkaTopic = args.KafkaTopic
 
 	s := &http.Server{
 		Addr:           args.Listen,
@@ -47,9 +53,6 @@ func main() {
 		s.Shutdown(ctx)
 		cancel()
 	}()
-
-	kafkaConfig.SetKey("bootstrap.servers", args.KafkaBroker)
-	kafkaConfig.SetKey("group.id", args.KafkaGroupID)
 
 	log.Printf("Listening on %s", args.Listen)
 	s.ListenAndServe()

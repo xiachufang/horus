@@ -1,0 +1,137 @@
+<html>
+
+<head>
+  <style>
+    * {
+      box-sizing: border-box;
+      line-height: 1.6;
+    }
+
+    body {
+      font-family: "Lucida Console", Monaco, monospace;
+    }
+
+    .filter-container {
+      display: flex;
+      padding: 8px 10px;
+      align-items: center;
+    }
+
+    .search {
+      flex-grow: 1;
+      padding: 2px 5px;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      font-size: 12px;
+    }
+
+    tbody tr {
+      width: 100%;
+    }
+
+    tr.header td {
+      font-weight: bold;
+    }
+
+    td {
+      border-collapse: collapse;
+      border-top-color: rgb(236, 240, 241);
+      border-top-style: solid;
+      border-top-width: 1px;
+
+      color: rgb(45, 45, 45);
+      display: table-cell;
+      font-size: 12px;
+      padding-bottom: 8px;
+      padding-left: 8px;
+      padding-right: 8px;
+      padding-top: 8px;
+      position: relative;
+      text-size-adjust: 100%;
+      vertical-align: top;
+    }
+
+    .property-name {
+      background-color: rgba(108, 135, 142, .15);
+      color: #444;
+      padding: 1px 5px;
+      margin-right: 5px;
+      font-family: monospace;
+      word-break: normal;
+      font-weight: bold;
+    }
+
+    .property-value {
+      color: #444;
+      padding: 1px 5px;
+      margin-right: 5px;
+      word-break: normal;
+    }
+
+    .list-container {
+      display: flex;
+      flex: 1 1 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="users">
+
+    <div class="filter-container"><span>Filter:&nbsp;</span><input class="search" placeholder="filter keyword" /></div>
+
+    <div class="list-container">
+      <table>
+        <thead>
+          <tr class="header">
+            <td class="time">time</td>
+            <td class="distinct_id">distinct_id</td>
+            <td class="type">type</td>
+            <td class="properties">properties</span></td>
+          </tr>
+        </thead>
+        <tbody class="list">
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script src="/static/js/list-1.5.0.js"></script>
+  <script>
+    var options = {
+      valueNames: ['time', 'distinct_id', 'type', 'properties'],
+      // Since there are no elements in the list, this will be used as template.
+      item: '<tr><td class="time"></td><td class="distinct_id"></td><td class="type"></td><td class="properties"></td></tr>'
+    };
+
+    var userList = new List('users', options);
+
+    // Create WebSocket connection.
+    const socket = new WebSocket('ws://192.168.6.161:8881/topic');
+
+    // Listen for messages
+    socket.addEventListener('message', function (e) {
+      const event = JSON.parse(e.data).event;
+      const properties = event.properties;
+      var props = '';
+      for (const key in properties) {
+        if (properties.hasOwnProperty(key)) {
+          const value = properties[key];
+          props += `<span class="property-name">${key}:</span><span class="property-value">${value}</span>`;
+        }
+      }
+      userList.add({
+        'time': event.time,
+        'distinct_id': event.distinct_id,
+        'type': event.type,
+        'properties': props,
+      });
+    });
+
+  </script>
+</body>
+
+</html>

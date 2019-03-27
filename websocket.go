@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -70,17 +73,47 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type neuteredFileSystem struct {
+	fs http.FileSystem
+}
+
+func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
+	f, err := nfs.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := f.Stat()
+	if s.IsDir() {
+		index := strings.TrimSuffix(path, "/") + "/index.html"
+		if _, err := nfs.fs.Open(index); err != nil {
+			return nil, err
+		}
+	}
+
+	return f, nil
+}
+
 // Server is websocket server
 type Server struct {
 	mux *http.ServeMux
 }
 
 func newServer() *Server {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s := &Server{
 		mux: http.NewServeMux(),
 	}
 
 	s.mux.HandleFunc("/topic", handler)
+
+	fs := http.FileServer(&neuteredFileSystem{http.Dir(dir)})
+	s.mux.Handle("/", fs)
+
 	return s
 }
 

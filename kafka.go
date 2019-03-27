@@ -10,6 +10,7 @@ import (
 var kafkaConfig = &kafka.ConfigMap{
 	"auto.offset.reset": "latest",
 }
+var kafkaTopic = "trackbeat-debug"
 
 func createKafkaConsumer() *kafka.Consumer {
 	c, err := kafka.NewConsumer(kafkaConfig)
@@ -17,7 +18,7 @@ func createKafkaConsumer() *kafka.Consumer {
 		log.Fatalf("Create kafka consumer: %v", err)
 	}
 
-	err = c.Subscribe("trackbeat-debug", nil)
+	err = c.Subscribe(kafkaTopic, nil)
 	if err != nil {
 		log.Fatalf("Subscribe to topic: %v", err)
 	}

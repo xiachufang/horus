@@ -83,6 +83,6 @@ func main() {
 		cancel()
 	}()
 
-	fmt.Printf("Listening on %s", args.Listen)
+	fmt.Printf("Listening on %s\n", args.Listen)
 	s.ListenAndServe()
 }

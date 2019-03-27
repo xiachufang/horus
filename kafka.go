@@ -1,7 +1,6 @@
 package main
 
 import (
-	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -37,28 +36,18 @@ func closeKafkaConsumer(c *kafka.Consumer) {
 	}
 }
 
-var startKafkaConsumerLock = &sync.Mutex{}
-var consumers = 0
-
 func startKafkaConsumer() {
-	startKafkaConsumerLock.Lock()
-	currentConsumers := consumers
-	consumers++
-	startKafkaConsumerLock.Unlock()
+	go func() {
+		log.Debugf("Start background kafka consumer\n")
 
-	if currentConsumers == 0 {
-		go func() {
-			log.Debugf("Start background kafka consumer\n")
-			defer func() {
-				stopKafkaConsumer()
-				log.Debugf("Finish background kafka consumer\n")
-			}()
+		kafkaConsumer := createKafkaConsumer()
+		defer closeKafkaConsumer(kafkaConsumer)
 
-			kafkaConsumer := createKafkaConsumer()
-			defer closeKafkaConsumer(kafkaConsumer)
-
-			running := true
-			for running {
+		for {
+			select {
+			case <-shutdownCh:
+				return
+			default:
 				log.Debug("Read message")
 				msg, err := kafkaConsumer.ReadMessage(timeout * time.Second)
 				if err == nil {
@@ -73,22 +62,7 @@ func startKafkaConsumer() {
 						log.Debugf("Read message timeout")
 					}
 				}
-
-				startKafkaConsumerLock.Lock()
-				running = consumers > 0
-				startKafkaConsumerLock.Unlock()
 			}
-		}()
-	} else {
-		log.Debugf("Background kafka consumer is running, skip starting\n")
-	}
-}
-
-func stopKafkaConsumer() {
-	log.Debugf("Stop background kafka consumer.")
-	startKafkaConsumerLock.Lock()
-	defer startKafkaConsumerLock.Unlock()
-	if consumers > 0 {
-		consumers--
-	}
+		}
+	}()
 }

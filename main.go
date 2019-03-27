@@ -64,6 +64,7 @@ func main() {
 	kafkaTopic = args.KafkaTopic
 
 	runPubSub()
+	startKafkaConsumer()
 
 	s := &http.Server{
 		Addr:           args.Listen,

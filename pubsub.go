@@ -60,15 +60,9 @@ func runPubSub() {
 						}
 					}
 				}
-			case <-donePubSub:
-				return
 			}
 		}
 	}()
-}
-
-func stopPubSub() {
-	donePubSub <- struct{}{}
 }
 
 func subscribe() chan interface{} {

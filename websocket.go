@@ -56,11 +56,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	ch := subscribe()
 	defer unsubscribe(ch)
 
-	log.Debugf("start consumer")
-	startKafkaConsumer()
-	defer stopKafkaConsumer()
-
-	log.Debugf("begin for")
+	log.Debugf("begin handler's for loop")
 	for {
 		select {
 		case msg, more := <-ch:

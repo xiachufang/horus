@@ -110,7 +110,7 @@
     var userList = new List('users', options);
 
     // Create WebSocket connection.
-    const socket = new WebSocket(`ws://${location.hostname}${location.port ? ':'+location.port: ''}/topic`);
+    const socket = new WebSocket(`ws${location.protocol.replace(":", "").slice(4, 5)}://${location.hostname}${location.port ? ':'+location.port: ''}/topic`);
 
     // Listen for messages
     socket.addEventListener('message', function (e) {

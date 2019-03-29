@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -117,7 +118,8 @@ func newServer() *Server {
 
 	s.mux.HandleFunc("/topic", handler)
 
-	fs := http.FileServer(&neuteredFileSystem{http.Dir(dir)})
+	staticPath := path.Join(dir, "dist")
+	fs := http.FileServer(&neuteredFileSystem{http.Dir(staticPath)})
 	s.mux.Handle("/", fs)
 
 	return s

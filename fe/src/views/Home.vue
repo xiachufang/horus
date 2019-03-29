@@ -44,12 +44,10 @@
             {{pathValue(column.path, msg)}}
           </td>
           <td>
-            <ul>
-              <div
-                class="prop-item"
-                v-for="(value, key) in msg.event.properties"
-                :key="key"><label>{{key}}</label>: {{value}}</div>
-            </ul>
+            <div
+              class="prop-item"
+              v-for="(value, key) in msg.event.properties"
+              :key="key"><label>{{key}}</label>: {{value}}</div>
           </td>
         </tr>
       </transition-group>
@@ -96,8 +94,7 @@ export default {
 
     const socket = new WebSocket(url)
     socket.addEventListener('open', (event) => {
-      console.log('Hello Server!')
-      // socket.send('Hello Server!')
+      // console.log('Hello Server!')
     })
     socket.addEventListener('error', (event) => {
       alert('socket 连接失败')
@@ -170,6 +167,7 @@ export default {
   .table thead th
     vertical-align bottom
     border-bottom 2px solid #dee2e6
+    text-align left
 
   .list-item
     background-color transparent

@@ -183,6 +183,7 @@ export default {
     position sticky
     top 0
     padding 20px
+    background-color #ffffff
   .tools-bar > div
     display flex
     flex-wrap wrap

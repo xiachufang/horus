@@ -117,6 +117,7 @@ export default {
   methods: {
     onMessage (event) {
       const result = JSON.parse(event.data)
+      result.event = JSON.parse(result.event)
       if (result.event && result.event.properties) {
         result.event.properties = this.sortByKeys(result.event.properties)
       }
